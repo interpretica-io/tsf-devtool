@@ -1,14 +1,24 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 /* Copyright (C) 2026 Interpretica Unipessoal Lda */
 /** @file
- * @brief Development tools TAPI: internal job wrapper
+ * @brief Running a development tool on a Test Agent
  *
- * Internal helper shared by the build tool TAPIs of this library. It is
- * not installed and must not be used outside tsf-devtool.
+ * @defgroup tapi_devtool_run Running a tool and capturing its output
+ * @ingroup tapi_devtool
+ * @{
  *
- * All three tools do the same thing to a job: build an argument vector
- * from an option structure, run it in a working directory, capture both
- * output streams and remember how the tool exited. This is that thing.
+ * The primitive every tool TAPI of this library is built on: take an
+ * option structure and its bindings, build an argument vector, run the
+ * program on a Test Agent in a working directory, capture both output
+ * streams and remember how it exited.
+ *
+ * A TAPI for a tool this library does not cover - and the kernel TAPIs
+ * of tsf-kernel are exactly that - gets the whole lifecycle by holding
+ * one #tapi_devtool_run and forwarding to the functions below. Tests
+ * normally use the tool TAPIs instead of calling this directly.
+ *
+ * @note Reading what a tool printed needs output channels and filters,
+ *       which only the RPC job factory implements; see @ref tapi_devtool.
  */
 
 #ifndef __TSF_TAPI_DEVTOOL_RUN_H__
@@ -157,3 +167,5 @@ extern te_errno tapi_devtool_run_fini(tapi_devtool_run *run);
 } /* extern "C" */
 #endif
 #endif /* !__TSF_TAPI_DEVTOOL_RUN_H__ */
+
+/**@} <!-- END tapi_devtool_run --> */

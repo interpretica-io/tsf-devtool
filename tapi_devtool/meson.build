@@ -2,9 +2,9 @@
 # Copyright (C) 2026 Interpretica Unipessoal Lda
 #
 # External TE library (see TE_EXT_REPO): engine-side TAPIs for the
-# development tools of a Test Agent - C/C++ compilers, make and the
-# kernel module build. Built as a shared library on the engine platform
-# and as a static library when agents or agent apps are built.
+# development tools of a Test Agent - C/C++ compilers and make, plus the
+# job wrapper they are built on. Built as a shared library on the engine
+# platform and as a static library when agents or agent apps are built.
 
 if get_option('engine')
     build_lib_shared = true
@@ -17,16 +17,14 @@ install_lib = install_dev
 headers += files(
     'tapi_cc.h',
     'tapi_devtool.h',
-    'tapi_kbuild.h',
+    'tapi_devtool_run.h',
     'tapi_make.h',
 )
 
-# tapi_devtool_run.h is internal to this library and is not installed.
 sources += files(
     'tapi_cc.c',
     'tapi_devtool.c',
     'tapi_devtool_run.c',
-    'tapi_kbuild.c',
     'tapi_make.c',
 )
 

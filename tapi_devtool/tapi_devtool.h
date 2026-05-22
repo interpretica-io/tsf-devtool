@@ -11,7 +11,12 @@
  *
  * - @ref tapi_cc - C and C++ compilers;
  * - @ref tapi_make - @c make;
- * - @ref tapi_kbuild - out-of-tree Linux kernel modules (kbuild).
+ * - @ref tapi_devtool_run - the primitive they are built on, for TAPIs
+ *   outside this library (tsf-kernel uses it).
+ *
+ * Kernel development - building out-of-tree modules, loading them and
+ * looking at what the kernel allows - lives in tsf-kernel, which builds
+ * on this library.
  *
  * Every tool of this library is started on a Test Agent through
  * @ref tapi_job, so a test works the same way whether the agent is the
