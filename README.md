@@ -39,8 +39,8 @@ with a CFG factory the job fails to create with `TE_EOPNOTSUPP`.
 ## Usage
 
 Declare the repository in an external libraries catalog (e.g.
-`ext-libs.yml` in the test suite conf directory) and pass it to
-`dispatcher.sh --ext-libs=ext-libs.yml`:
+`conf/external.yml` in the test suite) and pass it to
+`dispatcher.sh --external=external.yml`:
 
 ```yaml
 repositories:
