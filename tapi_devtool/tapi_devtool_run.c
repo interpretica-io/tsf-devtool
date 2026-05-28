@@ -64,6 +64,17 @@ tapi_devtool_run_init(tapi_devtool_run *run, tapi_job_factory_t *factory,
                       const tapi_job_opt_bind *binds, const void *opt,
                       const char *workdir)
 {
+    return tapi_devtool_run_init_env(run, factory, name, program, binds, opt,
+                                     workdir, NULL);
+}
+
+/* See description in tapi_devtool_run.h */
+te_errno
+tapi_devtool_run_init_env(tapi_devtool_run *run, tapi_job_factory_t *factory,
+                          const char *name, const char *program,
+                          const tapi_job_opt_bind *binds, const void *opt,
+                          const char *workdir, const char **env)
+{
     te_vec args = TE_VEC_INIT(char *);
     te_string out_name = TE_STRING_INIT;
     te_string err_name = TE_STRING_INIT;
@@ -87,6 +98,7 @@ tapi_devtool_run_init(tapi_devtool_run *run, tapi_job_factory_t *factory,
                             .name       = name,
                             .program    = program,
                             .argv       = (const char **)args.data.ptr,
+                            .env        = env,
                             .job_loc    = &run->job,
                             .stdout_loc = &run->out_chs[0],
                             .stderr_loc = &run->out_chs[1],
@@ -153,6 +165,48 @@ tapi_devtool_run_start(tapi_devtool_run *run)
     RING("Running %s: %s", run->name, te_string_value(&run->cmd));
 
     return tapi_job_start(run->job);
+}
+
+/* See description in tapi_devtool_run.h */
+te_errno
+tapi_devtool_run_expect(tapi_devtool_run *run, const char *needle,
+                        int timeout_ms)
+{
+    int waited_ms;
+
+    for (waited_ms = 0; waited_ms < timeout_ms;
+         waited_ms += TAPI_DEVTOOL_RECEIVE_TIMEOUT_MS)
+    {
+        tapi_job_buffer_t buf = TAPI_JOB_BUFFER_INIT;
+        te_errno rc;
+
+        rc = tapi_job_receive(TAPI_JOB_CHANNEL_SET(run->out_filter),
+                              TAPI_DEVTOOL_RECEIVE_TIMEOUT_MS, &buf);
+        if (rc == 0 && buf.data.ptr != NULL)
+        {
+            /*
+             * Kept, not consumed: whatever was read here is output of
+             * the tool like any other, and tapi_devtool_run_wait()
+             * would otherwise never see it again.
+             */
+            te_string_append(&run->out, "%s", buf.data.ptr);
+        }
+
+        te_string_free(&buf.data);
+
+        if (rc != 0 && TE_RC_GET_ERROR(rc) != TE_ETIMEDOUT)
+            return rc;
+
+        if (run->out.ptr != NULL && strstr(run->out.ptr, needle) != NULL)
+            return 0;
+
+        if (buf.eos)
+            break;
+    }
+
+    ERROR("%s did not say '%s' within %d ms", run->name, needle, timeout_ms);
+
+    return TE_RC(TE_TAPI, TE_ETIMEDOUT);
 }
 
 /* See description in tapi_devtool_run.h */

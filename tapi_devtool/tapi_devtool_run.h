@@ -91,6 +91,40 @@ extern te_errno tapi_devtool_run_init(tapi_devtool_run *run,
                                       const char *workdir);
 
 /**
+ * Create a job as tapi_devtool_run_init() does, with an environment.
+ *
+ * A job does not inherit the agent's environment, so @p env is the
+ * whole of what the program gets: what is not in it is not there. That
+ * is why this is a second function rather than a parameter on the
+ * first — a tool that only wants to be run should not have to say
+ * anything about an environment it does not care about.
+ *
+ * The caller that does care is tsf-time, which runs a program under a
+ * clock that is not the machine's by preloading a shim into it. An
+ * environment is the only way that reaches a process.
+ *
+ * @param[out] run      Run handle, initialized as above.
+ * @param[in]  factory  Job factory.
+ * @param[in]  name     Tool name for log messages.
+ * @param[in]  program  Program name or path.
+ * @param[in]  binds    Option bindings.
+ * @param[in]  opt      Option structure matching @p binds.
+ * @param[in]  workdir  Working directory on the agent (may be @c NULL).
+ * @param[in]  env      @c NULL terminated environment, or @c NULL to
+ *                      give the program none.
+ *
+ * @return Status code.
+ */
+extern te_errno tapi_devtool_run_init_env(tapi_devtool_run *run,
+                                          tapi_job_factory_t *factory,
+                                          const char *name,
+                                          const char *program,
+                                          const tapi_job_opt_bind *binds,
+                                          const void *opt,
+                                          const char *workdir,
+                                          const char **env);
+
+/**
  * Start the tool, discarding the output of a previous run.
  *
  * @param run           Run handle.
@@ -98,6 +132,33 @@ extern te_errno tapi_devtool_run_init(tapi_devtool_run *run,
  * @return Status code.
  */
 extern te_errno tapi_devtool_run_start(tapi_devtool_run *run);
+
+/**
+ * Wait until the tool has printed @p needle on its standard output.
+ *
+ * For a tool that has to be *ready* before anything else happens, and
+ * that says so: a server that prints @c ACCEPT once it is listening, a
+ * daemon that logs a version line once it has read its configuration.
+ * Starting one and carrying on is a race, and it is the kind that
+ * passes on a quiet machine and fails in CI - measured on
+ * @c s_server, whose client got @c ECONNREFUSED five milliseconds
+ * before the server printed @c ACCEPT.
+ *
+ * What is read here is appended to the run's output rather than
+ * consumed, so tapi_devtool_run_wait() still sees the whole of it
+ * afterwards.
+ *
+ * @param run           Run handle of a started tool.
+ * @param needle        Text to wait for.
+ * @param timeout_ms    How long to wait, ms.
+ *
+ * @return Status code.
+ * @retval TE_ETIMEDOUT The text did not appear, or the stream ended
+ *                      first.
+ */
+extern te_errno tapi_devtool_run_expect(tapi_devtool_run *run,
+                                        const char *needle,
+                                        int timeout_ms);
 
 /**
  * Wait for the tool and capture everything it printed.
